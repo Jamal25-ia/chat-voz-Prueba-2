@@ -5,13 +5,16 @@
     <title>Speech Recognition in Python</title>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/index.css') }}" />
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 </head>
 <body>
 <div id="speechContainer">
-    <h1>Upload new File</h1>
-    <form method="post" enctype="multipart/form-data">
-        <input type="file" name="file"/>
-        <br>
+    <h1>Speech Recognition</h1>
+    <button id="startRecording">Start Recording</button>
+    <button id="stopRecording" disabled>Stop Recording</button>
+
+    <form id="transcriptionForm" method="post" enctype="multipart/form-data" style="display: none;">
+        <input type="hidden" id="audioData" name="audioData" />
         <input type="submit" id="submitButton" value="Transcribe"/>
     </form>
 
@@ -22,6 +25,51 @@
         </div>
     {% endif %}
 </div>
+
+<script>
+    let mediaRecorder;
+    let audioChunks = [];
+
+    const startRecordingButton = document.getElementById('startRecording');
+    const stopRecordingButton = document.getElementById('stopRecording');
+    const audioDataInput = document.getElementById('audioData');
+    const transcriptionForm = document.getElementById('transcriptionForm');
+
+    startRecordingButton.addEventListener('click', startRecording);
+    stopRecordingButton.addEventListener('click', stopRecording);
+
+    function startRecording() {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then((stream) => {
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) {
+                        audioChunks.push(e.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    audioDataInput.value = audioUrl;
+                    transcriptionForm.style.display = 'block';
+                };
+
+                mediaRecorder.start();
+                startRecordingButton.disabled = true;
+                stopRecordingButton.disabled = false;
+            })
+            .catch((err) => console.error('Error accessing microphone:', err));
+    }
+
+    function stopRecording() {
+        if (mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            startRecordingButton.disabled = false;
+            stopRecordingButton.disabled = true;
+        }
+    }
+</script>
 
 </body>
 </html>
