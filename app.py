@@ -1,29 +1,65 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, jsonify
 import speech_recognition as sr
-import base64
-import io
 
 app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/transcribe', methods=['POST'])
+def transcribe():
+    audio_file = request.files['audio']
+
+    recognizer = sr.Recognizer()
+    with sr.AudioFile(audio_file) as source:
+        audio_data = recognizer.record(source)
+
+    transcription = recognizer.recognize_google(audio_data, language='es-ES')
+
+    return jsonify({'transcription': transcription})
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+
+
+
+
+
+
+"""
+from flask import Flask, render_template, request, redirect
+import speech_recognition as sr
+
+app = Flask(__name__)
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     transcript = ""
     if request.method == "POST":
-        if "audioData" not in request.form:
+        print("FORM DATA RECEIVED")
+
+        if "file" not in request.files:
             return redirect(request.url)
 
-        audio_data_url = request.form["audioData"]
-        audio_data = base64.b64decode(audio_data_url.split(',')[1])
+        file = request.files["file"]
+        if file.filename == "":
+            return redirect(request.url)
 
-        recognizer = sr.Recognizer()
-        audioFile = io.BytesIO(audio_data)
-        
-        with sr.AudioFile(audioFile) as source:
-            data = recognizer.record(source)
-
-        transcript = recognizer.recognize_google(data, key=None)
+        if file:
+            recognizer = sr.Recognizer()
+            audioFile = sr.AudioFile(file)
+            with audioFile as source:
+                data = recognizer.record(source)
+            transcript = recognizer.recognize_google(data, key=None)
 
     return render_template('index.html', transcript=transcript)
 
+
 if __name__ == "__main__":
     app.run(debug=True, threaded=True)
+
+"""
