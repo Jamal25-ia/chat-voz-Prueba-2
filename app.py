@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import speech_recognition as sr
+import os
 
 app = Flask(__name__)
 
@@ -11,11 +12,18 @@ def index():
 def transcribe():
     audio_file = request.files['audio']
 
+    # Guardar el archivo en el sistema de archivos temporal
+    audio_path = os.path.join('temp', 'audio.wav')
+    audio_file.save(audio_path)
+
     recognizer = sr.Recognizer()
-    with sr.AudioFile(audio_file) as source:
+    with sr.AudioFile(audio_path) as source:
         audio_data = recognizer.record(source)
 
     transcription = recognizer.recognize_google(audio_data, language='es-ES')
+
+    # Eliminar el archivo temporal después de procesarlo
+    os.remove(audio_path)
 
     return jsonify({'transcription': transcription})
 
