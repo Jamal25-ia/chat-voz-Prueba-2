@@ -12,8 +12,12 @@ def index():
 def transcribe():
     audio_file = request.files['audio']
 
-    # Guardar el archivo en el sistema de archivos temporal
-    audio_path = os.path.join('temp', 'audio.wav')
+    # Asegúrate de que la carpeta 'temp' exista en el directorio de la aplicación
+    temp_folder = os.path.join(os.getcwd(), 'temp')
+    os.makedirs(temp_folder, exist_ok=True)
+
+    # Guarda el archivo en el sistema de archivos temporal
+    audio_path = os.path.join(temp_folder, 'audio.wav')
     audio_file.save(audio_path)
 
     recognizer = sr.Recognizer()
@@ -22,7 +26,7 @@ def transcribe():
 
     transcription = recognizer.recognize_google(audio_data, language='es-ES')
 
-    # Eliminar el archivo temporal después de procesarlo
+    # Elimina el archivo temporal después de procesarlo
     os.remove(audio_path)
 
     return jsonify({'transcription': transcription})
